@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plin Mi Negocio · Simulación</title>
+<meta name="description" content="Simulación navegable de Plin Mi Negocio · Equipo 2, Gerencia de Marketing, Tech MBA UTEC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F6F5;--ink:#12262B;--mute:#5A6B70;--body:#33474C;--acc:#0B6E78;--acc2:#084F56;--soft:#E3F1F2;--line:#B7C7CA;--warnbg:#FFF1DC;--warn:#6B3A00;--red:#8A3B12}
+*{box-sizing:border-box}
+html,body{margin:0;background:#DCE5E4;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink)}
+body{min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:24px 12px}
+.phone{width:100%;max-width:390px;min-height:844px;background:var(--bg);border-radius:28px;overflow:hidden;box-shadow:0 10px 40px rgba(18,38,43,.18);display:flex;flex-direction:column;font-size:15px;line-height:1.45}
+@media (max-width:430px){body{padding:0}.phone{border-radius:0;box-shadow:none;min-height:100vh}}
+.scr{flex:1;display:flex;flex-direction:column;gap:14px;padding:26px 20px 20px}
+.h1{font-size:24px;font-weight:700;line-height:1.2}
+.muted{font-size:13px;color:var(--mute)}
+.body{color:var(--body)}
+.card{background:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.tag{font-size:12px;font-weight:700;color:var(--acc);letter-spacing:.04em}
+.big{font-size:32px;font-weight:700}
+.btn{min-height:52px;border:0;border-radius:12px;background:var(--acc);color:#fff;font:700 16px inherit;font-family:inherit;cursor:pointer}
+.btn:hover{background:var(--acc2)}
+.btn2{min-height:48px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font-weight:600;font-size:15px;font-family:inherit;cursor:pointer}
+.back{align-self:flex-start;min-height:44px;border:0;background:transparent;color:var(--acc);font-size:15px;font-weight:600;padding:0;font-family:inherit;cursor:pointer}
+.bottom{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+button:focus-visible{outline:3px solid #F2B84B;outline-offset:2px}
+.offer{text-align:left;font-family:inherit;color:var(--ink);background:#fff;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;border:1px solid #D5E0E2;cursor:pointer}
+.offer.sel{border:2px solid var(--acc)}
+.foot{text-align:center;font-size:12px;color:var(--mute);padding:10px}
+</style>
+</head>
+<body>
+<main class="phone" id="app" aria-live="polite"></main>
+<script>
+const S = { screen:'banca', rechazo:false, clasif:null, constancia:false, consent2:false, rev1:false, rev2:false, prestamista:'tu banco', sel:null };
+const OFERTAS = [
+  {tipo:'BANCO SOCIO', nombre:'Banco socio 2', monto:'S/ 2 000', cuotas:'6 cuotas'},
+  {tipo:'BANCO SOCIO', nombre:'Banco socio 3', monto:'S/ 1 800', cuotas:'6 cuotas'},
+  {tipo:'CAJA SOCIA', nombre:'Caja socia A', monto:'S/ 2 000', cuotas:'8 cuotas'},
+  {tipo:'CAJA SOCIA', nombre:'Caja socia B', monto:'S/ 1 500', cuotas:'6 cuotas'}
+];
+const fmt = n => n.toLocaleString('es-PE').replace(/,/g,' ');
+function set(p){ Object.assign(S,p); render(); window.scrollTo(0,0); }
+const A = {
+  go: s => set({screen:s}),
+  esVenta: () => set({clasif:'venta'}), esMio: () => set({clasif:'mio'}),
+  constancia: () => set({constancia:true}),
+  verOtras: () => set({rechazo:true, screen:'permiso2'}),
+  aprueba: () => set({rechazo:false}),
+  aceptarBanco: () => set({screen:'listo', prestamista:'tu banco'}),
+  autorizar2: () => set({screen:'oferta2', consent2:true, rev2:false}),
+  pick: i => set({sel:i}),
+  aceptarOferta: () => { if (S.sel!==null) set({screen:'listo', prestamista:OFERTAS[S.sel].nombre}); },
+  rev1: () => set({rev1:true}), rev2: () => set({rev2:true}),
+  reiniciar: () => set({screen:'banca', rechazo:false, clasif:null, constancia:false, consent2:false, rev1:false, rev2:false, prestamista:'tu banco', sel:null})
+};
+const b = (fn, cls, txt, arg) => `<button class="${cls}" data-a="${fn}"${arg!==undefined?` data-arg="${arg}"`:''}>${txt}</button>`;
+const back = to => `<button class="back" data-a="go" data-arg="${to}" aria-label="Volver">‹ Volver</button>`;
+
+const V = {
+banca: () => `<div class="scr">
+  <div><div class="muted">Tu banca móvil</div><div class="h1">Hola, Rosa</div></div>
+  <div style="background:#12262B;color:#fff;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:6px">
+    <span style="font-size:13px;color:#C9D6D9">Cuenta de ahorros</span><span style="font-size:28px;font-weight:700">S/ 3 245,80</span>
+    <span style="font-size:13px;color:#C9D6D9">Aquí te pagan tus clientes por Plin y Yape</span></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+    ${['Transferir','Plin','Pagar servicios'].map(t=>`<div style="background:#fff;border-radius:14px;padding:14px 8px;text-align:center;font-size:13px;font-weight:600">${t}</div>`).join('')}</div>
+  <div style="background:var(--soft);border:1px solid #B7D8DB;border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:10px">
+    <span class="tag">NUEVO · GRATIS</span>
+    <span style="font-size:20px;font-weight:700;line-height:1.25">¿Tienes negocio? Activa Plin Mi Negocio</span>
+    <span class="body">Cada noche te decimos cuánto vendió tu bodega, separado de tu plata personal. Y con tus ventas, accedes a crédito para reponer.</span>
+    ${b('go','btn','Activar','permiso')}</div>
+  <div class="foot" style="margin-top:auto">Simulación con montos ilustrativos · Equipo 2</div></div>`,
+
+permiso: () => `<div class="scr">${back('banca')}
+  <div class="h1">Antes de empezar, tu permiso</div>
+  <div class="body">Plin Mi Negocio necesita leer los cobros que entran a tu cuenta. Tú decides.</div>
+  <div class="card"><b style="color:var(--acc)">Lo que sí hará</b>
+    <span>✓ Leer los cobros que entran a tu cuenta</span><span>✓ Separar lo del negocio de lo personal</span><span>✓ Mostrarle tus ventas a tu banco para ofrecerte crédito</span></div>
+  <div class="card"><b style="color:var(--red)">Lo que no hará</b>
+    <span>✕ Mover tu dinero: tu plata sigue en tu banco</span><span>✕ Compartir tus datos con otra entidad sin preguntarte</span></div>
+  <div class="muted">Puedes retirar este permiso cuando quieras desde "Mis permisos".</div>
+  <div class="bottom">${b('go','btn','Autorizar y activar','chat')}${b('go','btn2','Ahora no','banca')}</div></div>`,
+
+chat: () => `<div style="flex:1;display:flex;flex-direction:column;background:#ECE8E1">
+  <div style="background:var(--acc);color:#fff;padding:22px 20px 16px"><div style="font-size:17px;font-weight:700">Plin Mi Negocio</div><div style="font-size:12px;color:#D6ECEE">Mensaje por WhatsApp · cuenta verificada</div></div>
+  <div style="flex:1;display:flex;flex-direction:column;gap:12px;padding:18px 16px">
+    <span style="align-self:center;background:#fff;border-radius:8px;padding:4px 10px;font-size:12px;color:var(--mute)">Hoy</span>
+    <div style="align-self:flex-start;max-width:300px;background:#fff;border-radius:4px 14px 14px 14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+      <span>¡Listo, Rosa! Activaste Plin Mi Negocio. Desde hoy te mando tu cierre cada noche.</span><span style="align-self:flex-end;font-size:11px;color:var(--mute)">18:42</span></div>
+    <div style="align-self:flex-start;max-width:300px;background:#fff;border-radius:4px 14px 14px 14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+      <b>Tu cierre de hoy, martes 20</b><span>Ventas del negocio: <b>S/ 480</b> en 62 cobros.</span><span>Entraron aparte <b>S/ 120</b> que no parecen venta.</span><span>Últimos 7 días: <b>S/ 3 210</b>.</span>
+      ${b('go','btn2','Ver mis ventas','ventas')}<span style="align-self:flex-end;font-size:11px;color:var(--mute)">21:00</span></div>
+  </div></div>`,
+
+ventas: () => {
+  const hoy = S.clasif==='venta'?600:480;
+  const raw=[['Mi',410],['J',455],['V',520],['S',610],['D',395],['L',340],['Ma',hoy]];
+  const sem = raw.reduce((a,r)=>a+r[1],0);
+  const det = S.clasif==='venta'?'63 cobros · incluye los S/ 120 que marcaste como venta':S.clasif==='mio'?'62 cobros · los S/ 120 quedaron como plata tuya':'62 cobros · ticket promedio S/ 7,74';
+  return `<div class="scr"><div style="display:flex;justify-content:space-between">${back('chat')}${b('go','back','Mis permisos','permisos')}</div>
+  <div class="h1">Mis ventas</div>
+  <div class="card" style="gap:4px"><span class="muted">Vendido hoy por el negocio</span><span class="big">S/ ${fmt(hoy)}</span><span class="muted">${det}</span></div>
+  ${S.clasif===null?`<div style="background:var(--warnbg);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px">
+    <span style="color:var(--warn)"><b>Entraron S/ 120 aparte.</b> ¿Son del negocio?</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${b('esVenta','btn2','Sí, es venta')}${b('esMio','btn2','No, es mío')}</div></div>`:''}
+  <div class="card"><span class="muted">Últimos 7 días · S/ ${fmt(sem)}</span>
+    <div style="display:flex;align-items:flex-end;gap:8px;height:110px" role="img" aria-label="Ventas por día de los últimos 7 días">
+    ${raw.map((r,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;border-radius:6px 6px 2px 2px;background:${i===6?'#0B6E78':'#9CCBD0'};height:${Math.round(r[1]/650*88)}px"></div><span style="font-size:11px;color:var(--mute)">${r[0]}</span></div>`).join('')}</div></div>
+  ${b('constancia','btn2',S.constancia?'Constancia de ventas lista (PDF)':'Descargar constancia de ventas')}
+  <div class="bottom">${b('go','btn','Necesito reponer mercadería','credito')}</div></div>`;
+},
+
+credito: () => `<div class="scr">${back('ventas')}<div class="h1">Crédito para reponer</div>
+  ${!S.rechazo?`<div class="card"><span class="tag">PREAPROBADO · TU BANCO</span><span class="big">S/ 2 000</span>
+    <span>En 6 cuotas mensuales. El dinero llega hoy a tu misma cuenta.</span><span class="muted">Calculado con tus ventas de los últimos 3 meses. Tasa y cuota: [SEGÚN EL BANCO].</span></div>
+  <div style="background:var(--warnbg);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:13px;color:var(--warn)"><b>Simulación:</b> mira qué pasa si su banco no le presta. Verá ofertas de otros bancos socios y cajas para comparar.</span>
+    <button class="btn" style="background:#8A4B00" data-a="verOtras">Ver ofertas de otros bancos y cajas</button></div>
+  <div class="bottom">${b('aceptarBanco','btn','Aceptar S/ 2 000')}</div>`
+  :`<div class="card"><b>Tu banco no puede ofrecerte crédito por ahora</b><span class="body">Pero tus ventas cuentan. Otros bancos socios y cajas pueden evaluarte con tu historial.</span></div>
+  <div style="background:var(--soft);border-radius:16px;padding:16px;font-size:13px;color:#1E4A50">Turno 2 de la cascada: solo llega aquí quien su banco no aprobó. Su banco recibe una parte de la comisión por referirlo.</div>
+  <div class="bottom">${b('go','btn','Ver opciones de entidades socias','permiso2')}${b('aprueba','btn2','Volver al caso en que el banco aprueba')}</div>`}</div>`,
+
+permiso2: () => `<div class="scr">${back('credito')}
+  <div class="h1">¿Compartes tu historial con otras entidades socias?</div>
+  <div class="body">Otros bancos socios y cajas podrán evaluarte y hacerte una oferta. Es un permiso aparte, solo para este préstamo.</div>
+  <div class="card"><b style="color:var(--acc)">Verá</b><span>✓ Tus ventas del negocio de los últimos 6 meses</span>
+    <b style="color:var(--red);margin-top:6px">No verá</b><span>✕ Tus gastos personales ni tus otras cuentas</span></div>
+  <div class="bottom">${b('autorizar2','btn','Autorizar y ver ofertas')}${b('go','btn2','No compartir','credito')}</div></div>`,
+
+oferta2: () => {
+  const e = S.sel===null?null:OFERTAS[S.sel];
+  return `<div class="scr">${back('permiso2')}<div class="h1">Compara y elige</div>
+  <div class="body">4 entidades socias te hicieron una oferta. El dinero llega a tu misma cuenta de siempre.</div>
+  ${OFERTAS.map((o,i)=>`<button class="offer${S.sel===i?' sel':''}" data-a="pick" data-arg="${i}" aria-pressed="${S.sel===i}">
+    <span style="display:flex;justify-content:space-between"><span class="tag">${o.tipo}</span><span class="tag">${S.sel===i?'Elegida ✓':''}</span></span>
+    <span style="font-size:17px;font-weight:700">${o.nombre}</span><span style="font-size:14px">${o.monto} · ${o.cuotas}</span>
+    <span class="muted">Tasa (TCEA): [SEGÚN LA ENTIDAD]</span></button>`).join('')}
+  <div class="bottom">${b('aceptarOferta','btn',e?`Aceptar ${e.monto} de ${e.nombre}`:'Elige una oferta')}</div></div>`;
+},
+
+listo: () => `<div class="scr">
+  <div style="margin-top:60px;width:64px;height:64px;border-radius:32px;background:var(--soft);color:var(--acc);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700" aria-hidden="true">✓</div>
+  <div class="h1" style="font-size:26px">Listo, Rosa. El dinero llega hoy a tu cuenta.</div>
+  <div class="body">Te presta: <b>${S.prestamista}</b>. Puedes reponer cuando llegue tu proveedor.</div>
+  <div class="body">Tu cierre diario sigue llegando cada noche por WhatsApp.</div>
+  <div class="bottom">${b('go','btn2','Ver mis permisos','permisos')}${b('reiniciar','btn','Volver al inicio')}</div></div>`,
+
+permisos: () => {
+  const ok='font-size:13px;font-weight:700;color:var(--acc)', off='font-size:13px;font-weight:700;color:var(--red)';
+  const ps=[{t:'Leer tus cobros',d:'Plin Mi Negocio · para ordenar tus ventas y mostrarlas a tu banco',r:S.rev1,a:'rev1'}];
+  if(S.consent2) ps.push({t:'Compartir tu historial',d:'Bancos y cajas socias · solo para evaluar tu préstamo',r:S.rev2,a:'rev2'});
+  return `<div class="scr">${back('ventas')}<div class="h1">Mis permisos</div>
+  <div class="body">Quién puede ver tus datos. Puedes retirar cualquier permiso con un toque.</div>
+  ${ps.map(p=>`<div class="card"><b>${p.t}</b><span class="muted">${p.d}</span>
+    <div style="display:flex;justify-content:space-between;align-items:center"><span style="${p.r?off:ok}">${p.r?'Retirado':'Activo'}</span>
+    ${p.r?'':`<button class="btn2" style="border-color:#D9A58A;color:var(--red);padding:0 16px;min-height:44px" data-a="${p.a}">Retirar</button>`}</div></div>`).join('')}</div>`;
+}
+};
+
+function render(){ document.getElementById('app').innerHTML = V[S.screen](); }
+document.getElementById('app').addEventListener('click', e => {
+  const t = e.target.closest('[data-a]'); if(!t) return;
+  const fn = A[t.dataset.a]; const arg = t.dataset.arg;
+  if (t.dataset.a==='pick') fn(Number(arg)); else fn(arg);
+});
+render();
+</script>
+</body>
+</html>
