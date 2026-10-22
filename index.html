@@ -21,7 +21,7 @@ body{min-height:100vh;display:flex;justify-content:center;align-items:flex-start
 .card{background:#fff;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
 .tag{font-size:12px;font-weight:700;color:var(--acc);letter-spacing:.04em}
 .big{font-size:32px;font-weight:700}
-.btn{min-height:52px;border:0;border-radius:12px;background:var(--acc);color:#fff;font:700 16px inherit;font-family:inherit;cursor:pointer}
+.btn{min-height:52px;border:0;border-radius:12px;background:var(--acc);color:#fff;font-weight:700;font-size:16px;font-family:inherit;cursor:pointer}
 .btn:hover{background:var(--acc2)}
 .btn2{min-height:48px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font-weight:600;font-size:15px;font-family:inherit;cursor:pointer}
 .back{align-self:flex-start;min-height:44px;border:0;background:transparent;color:var(--acc);font-size:15px;font-weight:600;padding:0;font-family:inherit;cursor:pointer}
@@ -29,33 +29,42 @@ body{min-height:100vh;display:flex;justify-content:center;align-items:flex-start
 button:focus-visible{outline:3px solid #F2B84B;outline-offset:2px}
 .offer{text-align:left;font-family:inherit;color:var(--ink);background:#fff;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;border:1px solid #D5E0E2;cursor:pointer}
 .offer.sel{border:2px solid var(--acc)}
+.fin{background:#FFF8EC;border:2px solid #C98A2E;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.fin .tag{color:#8A4B00}
+.demo{min-height:44px;border:1px dashed var(--line);border-radius:12px;background:transparent;color:var(--mute);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer}
 .foot{text-align:center;font-size:12px;color:var(--mute);padding:10px}
 </style>
 </head>
 <body>
 <main class="phone" id="app" aria-live="polite"></main>
 <script>
-const S = { screen:'banca', rechazo:false, clasif:null, constancia:false, consent2:false, rev1:false, rev2:false, prestamista:'tu banco', sel:null };
+const S0 = { screen:'banca', sinOfertas:false, clasif:null, constancia:false, consent2:false, rev1:false, rev2:false, prestamista:'', monto:'', sel:null };
+const S = Object.assign({}, S0);
+// Ofertas preaprobadas de los bancos y cajas socias (montos ilustrativos)
 const OFERTAS = [
-  {tipo:'BANCO SOCIO', nombre:'Banco socio 2', monto:'S/ 2 000', cuotas:'6 cuotas'},
-  {tipo:'BANCO SOCIO', nombre:'Banco socio 3', monto:'S/ 1 800', cuotas:'6 cuotas'},
-  {tipo:'CAJA SOCIA', nombre:'Caja socia A', monto:'S/ 2 000', cuotas:'8 cuotas'},
-  {tipo:'CAJA SOCIA', nombre:'Caja socia B', monto:'S/ 1 500', cuotas:'6 cuotas'}
+  {tipo:'TU BANCO', nombre:'Interbank', monto:'S/ 2 000', cuotas:'6 cuotas'},
+  {tipo:'BANCO SOCIO', nombre:'BBVA', monto:'S/ 2 000', cuotas:'6 cuotas'},
+  {tipo:'BANCO SOCIO', nombre:'Scotiabank', monto:'S/ 1 800', cuotas:'6 cuotas'},
+  {tipo:'CAJA SOCIA', nombre:'Caja Arequipa', monto:'S/ 2 500', cuotas:'8 cuotas'},
+  {tipo:'CAJA SOCIA', nombre:'Caja Huancayo', monto:'S/ 1 500', cuotas:'6 cuotas'}
 ];
+// Crédito de arranque de la fintech: solo aparece si ningún banco ni caja hizo una oferta
+const FINTECH = {monto:'S/ 1 500', cuotas:'12 cuotas'};
 const fmt = n => n.toLocaleString('es-PE').replace(/,/g,' ');
-function set(p){ Object.assign(S,p); render(); window.scrollTo(0,0); }
+function set(p, keepScroll){ Object.assign(S,p); render(); if(!keepScroll) window.scrollTo(0,0); }
 const A = {
   go: s => set({screen:s}),
   esVenta: () => set({clasif:'venta'}), esMio: () => set({clasif:'mio'}),
   constancia: () => set({constancia:true}),
-  verOtras: () => set({rechazo:true, screen:'permiso2'}),
-  aprueba: () => set({rechazo:false}),
-  aceptarBanco: () => set({screen:'listo', prestamista:'tu banco'}),
-  autorizar2: () => set({screen:'oferta2', consent2:true, rev2:false}),
-  pick: i => set({sel:i}),
-  aceptarOferta: () => { if (S.sel!==null) set({screen:'listo', prestamista:OFERTAS[S.sel].nombre}); },
+  pedirCredito: () => set({screen: S.consent2 && !S.rev2 ? 'credito' : 'permiso2'}),
+  autorizar2: () => set({screen:'credito', consent2:true, rev2:false}),
+  pick: i => set({sel:i}, true),
+  aceptarOferta: () => { if (S.sel!==null) { const o = OFERTAS[S.sel]; set({screen:'listo', prestamista:o.nombre, monto:o.monto}); } },
+  sinOfertas: () => set({sinOfertas:true, sel:null}),
+  conOfertas: () => set({sinOfertas:false}),
+  aceptarFintech: () => set({screen:'listo', prestamista:'la fintech aliada (crédito de arranque)', monto:FINTECH.monto}),
   rev1: () => set({rev1:true}), rev2: () => set({rev2:true}),
-  reiniciar: () => set({screen:'banca', rechazo:false, clasif:null, constancia:false, consent2:false, rev1:false, rev2:false, prestamista:'tu banco', sel:null})
+  reiniciar: () => set(Object.assign({}, S0))
 };
 const b = (fn, cls, txt, arg) => `<button class="${cls}" data-a="${fn}"${arg!==undefined?` data-arg="${arg}"`:''}>${txt}</button>`;
 const back = to => `<button class="back" data-a="go" data-arg="${to}" aria-label="Volver">‹ Volver</button>`;
@@ -79,7 +88,7 @@ permiso: () => `<div class="scr">${back('banca')}
   <div class="h1">Antes de empezar, tu permiso</div>
   <div class="body">Plin Mi Negocio necesita leer los cobros que entran a tu cuenta. Tú decides.</div>
   <div class="card"><b style="color:var(--acc)">Lo que sí hará</b>
-    <span>✓ Leer los cobros que entran a tu cuenta</span><span>✓ Separar lo del negocio de lo personal</span><span>✓ Mostrarle tus ventas a tu banco para ofrecerte crédito</span></div>
+    <span>✓ Leer los cobros que entran a tu cuenta</span><span>✓ Separar lo del negocio de lo personal</span><span>✓ Mostrar tus ventas a bancos y cajas socias cuando pidas crédito</span></div>
   <div class="card"><b style="color:var(--red)">Lo que no hará</b>
     <span>✕ Mover tu dinero: tu plata sigue en tu banco</span><span>✕ Compartir tus datos con otra entidad sin preguntarte</span></div>
   <div class="muted">Puedes retirar este permiso cuando quieras desde "Mis permisos".</div>
@@ -111,49 +120,47 @@ ventas: () => {
     <div style="display:flex;align-items:flex-end;gap:8px;height:110px" role="img" aria-label="Ventas por día de los últimos 7 días">
     ${raw.map((r,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;border-radius:6px 6px 2px 2px;background:${i===6?'#0B6E78':'#9CCBD0'};height:${Math.round(r[1]/650*88)}px"></div><span style="font-size:11px;color:var(--mute)">${r[0]}</span></div>`).join('')}</div></div>
   ${b('constancia','btn2',S.constancia?'Constancia de ventas lista (PDF)':'Descargar constancia de ventas')}
-  <div class="bottom">${b('go','btn','Necesito reponer mercadería','credito')}</div></div>`;
+  <div class="bottom">${b('pedirCredito','btn','Necesito reponer mercadería')}</div></div>`;
 },
 
-credito: () => `<div class="scr">${back('ventas')}<div class="h1">Crédito para reponer</div>
-  ${!S.rechazo?`<div class="card"><span class="tag">PREAPROBADO · TU BANCO</span><span class="big">S/ 2 000</span>
-    <span>En 6 cuotas mensuales. El dinero llega hoy a tu misma cuenta.</span><span class="muted">Calculado con tus ventas de los últimos 3 meses. Tasa y cuota: [SEGÚN EL BANCO].</span></div>
-  <div style="background:var(--warnbg);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px">
-    <span style="font-size:13px;color:var(--warn)"><b>Simulación:</b> mira qué pasa si su banco no le presta. Verá ofertas de otros bancos socios y cajas para comparar.</span>
-    <button class="btn" style="background:#8A4B00" data-a="verOtras">Ver ofertas de otros bancos y cajas</button></div>
-  <div class="bottom">${b('aceptarBanco','btn','Aceptar S/ 2 000')}</div>`
-  :`<div class="card"><b>Tu banco no puede ofrecerte crédito por ahora</b><span class="body">Pero tus ventas cuentan. Otros bancos socios y cajas pueden evaluarte con tu historial.</span></div>
-  <div style="background:var(--soft);border-radius:16px;padding:16px;font-size:13px;color:#1E4A50">Turno 2 de la cascada: solo llega aquí quien su banco no aprobó. Su banco recibe una parte de la comisión por referirlo.</div>
-  <div class="bottom">${b('go','btn','Ver opciones de entidades socias','permiso2')}${b('aprueba','btn2','Volver al caso en que el banco aprueba')}</div>`}</div>`,
+permiso2: () => `<div class="scr">${back('ventas')}
+  <div class="h1">¿Compartes tus ventas para ver tus préstamos preaprobados?</div>
+  <div class="body">Con tu permiso, tus ventas se muestran a la vez a todos los bancos y cajas socias, y cada uno te hace su oferta. Es un permiso aparte, solo para este préstamo.</div>
+  <div class="card"><b style="color:var(--acc)">Verán</b><span>✓ Tus ventas del negocio de los últimos 6 meses</span>
+    <b style="color:var(--red);margin-top:6px">No verán</b><span>✕ Tus gastos personales ni tus otras cuentas</span></div>
+  <div class="bottom">${b('autorizar2','btn','Autorizar y ver ofertas')}${b('go','btn2','No compartir','ventas')}</div></div>`,
 
-permiso2: () => `<div class="scr">${back('credito')}
-  <div class="h1">¿Compartes tu historial con otras entidades socias?</div>
-  <div class="body">Otros bancos socios y cajas podrán evaluarte y hacerte una oferta. Es un permiso aparte, solo para este préstamo.</div>
-  <div class="card"><b style="color:var(--acc)">Verá</b><span>✓ Tus ventas del negocio de los últimos 6 meses</span>
-    <b style="color:var(--red);margin-top:6px">No verá</b><span>✕ Tus gastos personales ni tus otras cuentas</span></div>
-  <div class="bottom">${b('autorizar2','btn','Autorizar y ver ofertas')}${b('go','btn2','No compartir','credito')}</div></div>`,
-
-oferta2: () => {
-  const e = S.sel===null?null:OFERTAS[S.sel];
-  return `<div class="scr">${back('permiso2')}<div class="h1">Compara y elige</div>
-  <div class="body">4 entidades socias te hicieron una oferta. El dinero llega a tu misma cuenta de siempre.</div>
+credito: () => {
+  if (!S.sinOfertas) {
+    const e = S.sel===null?null:OFERTAS[S.sel];
+    return `<div class="scr">${back('ventas')}<div class="h1">Crédito para reponer</div>
+  <div class="body">${OFERTAS.length} entidades socias te preaprobaron. Compara y elige: el dinero llega a tu misma cuenta de siempre.</div>
   ${OFERTAS.map((o,i)=>`<button class="offer${S.sel===i?' sel':''}" data-a="pick" data-arg="${i}" aria-pressed="${S.sel===i}">
     <span style="display:flex;justify-content:space-between"><span class="tag">${o.tipo}</span><span class="tag">${S.sel===i?'Elegida ✓':''}</span></span>
-    <span style="font-size:17px;font-weight:700">${o.nombre}</span><span style="font-size:14px">${o.monto} · ${o.cuotas}</span>
-    <span class="muted">Tasa (TCEA): [SEGÚN LA ENTIDAD]</span></button>`).join('')}
-  <div class="bottom">${b('aceptarOferta','btn',e?`Aceptar ${e.monto} de ${e.nombre}`:'Elige una oferta')}</div></div>`;
+    <span style="font-size:17px;font-weight:700">${o.nombre}</span><span style="font-size:14px">${o.monto} · ${o.cuotas} · TCEA [SEGÚN LA ENTIDAD]</span></button>`).join('')}
+  ${b('aceptarOferta','btn',e?`Aceptar ${e.monto} de ${e.nombre}`:'Elige una oferta')}
+  <div style="background:var(--warnbg);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:13px;color:var(--warn)"><b>Simulación:</b> ¿y si ningún banco ni caja socia la aprueba?</span>
+    <button class="btn" style="background:#8A4B00;min-height:44px;font-size:15px" data-a="sinOfertas">Ver el caso sin ofertas</button></div></div>`;
+  }
+  return `<div class="scr">${back('ventas')}<div class="h1">Crédito para reponer</div>
+  <div class="card"><b>Ningún banco ni caja socia puede ofrecerte crédito por ahora</b><span class="body">Tus ventas igual cuentan. Para que no te quedes sin mercadería, tienes un crédito de arranque.</span></div>
+  <div class="fin"><span class="tag">CRÉDITO DE ARRANQUE · FINTECH ALIADA</span><span style="font-size:30px;font-weight:700">${FINTECH.monto}</span>
+    <span style="font-size:14px">${FINTECH.cuotas} · TCEA [SEGÚN LA FINTECH]</span><span class="muted">Si pagas puntual, en 6 a 12 meses los bancos y cajas socias te vuelven a evaluar.</span></div>
+  <div class="bottom">${b('aceptarFintech','btn',`Aceptar ${FINTECH.monto}`)}${b('conOfertas','demo','Modo demo: volver al caso con ofertas')}</div></div>`;
 },
 
 listo: () => `<div class="scr">
   <div style="margin-top:60px;width:64px;height:64px;border-radius:32px;background:var(--soft);color:var(--acc);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700" aria-hidden="true">✓</div>
-  <div class="h1" style="font-size:26px">Listo, Rosa. El dinero llega hoy a tu cuenta.</div>
+  <div class="h1" style="font-size:26px">Listo, Rosa. ${S.monto} llegan hoy a tu cuenta.</div>
   <div class="body">Te presta: <b>${S.prestamista}</b>. Puedes reponer cuando llegue tu proveedor.</div>
   <div class="body">Tu cierre diario sigue llegando cada noche por WhatsApp.</div>
   <div class="bottom">${b('go','btn2','Ver mis permisos','permisos')}${b('reiniciar','btn','Volver al inicio')}</div></div>`,
 
 permisos: () => {
   const ok='font-size:13px;font-weight:700;color:var(--acc)', off='font-size:13px;font-weight:700;color:var(--red)';
-  const ps=[{t:'Leer tus cobros',d:'Plin Mi Negocio · para ordenar tus ventas y mostrarlas a tu banco',r:S.rev1,a:'rev1'}];
-  if(S.consent2) ps.push({t:'Compartir tu historial',d:'Bancos y cajas socias · solo para evaluar tu préstamo',r:S.rev2,a:'rev2'});
+  const ps=[{t:'Leer tus cobros',d:'Plin Mi Negocio · para ordenar tus ventas',r:S.rev1,a:'rev1'}];
+  if(S.consent2) ps.push({t:'Compartir tus ventas',d:'Bancos y cajas socias · solo para evaluar tu préstamo',r:S.rev2,a:'rev2'});
   return `<div class="scr">${back('ventas')}<div class="h1">Mis permisos</div>
   <div class="body">Quién puede ver tus datos. Puedes retirar cualquier permiso con un toque.</div>
   ${ps.map(p=>`<div class="card"><b>${p.t}</b><span class="muted">${p.d}</span>
